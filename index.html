@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Home of The Daily Forensic</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Source+Serif+4:wght@300;400;600&family=Oswald:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --paper: #f5f0e8;
+    --ink: #1a1a1a;
+    --gold: #c8a84b;
+    --mid: #666;
+    --light: #e0d8c8;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--paper);
+    font-family: 'Source Serif 4', Georgia, serif;
+    color: var(--ink);
+    overflow-x: hidden;
+  }
+
+  /* ── PROGRESS BAR ── */
+  #progress-bar {
+    position: fixed; top: 0; left: 0; height: 3px;
+    background: var(--gold); z-index: 2000;
+    width: 0%; transition: width 0.1s linear;
+  }
+
+  /* ── STICKY MASTHEAD ── */
+  .masthead {
+    position: sticky; top: 0; z-index: 1000;
+    background: var(--ink); color: var(--paper);
+    text-align: center; padding: 1.2rem 2rem 1rem;
+    border-bottom: 4px solid var(--gold);
+    transition: padding 0.3s;
+  }
+  .masthead.compact { padding: 0.5rem 2rem; }
+  .masthead-top {
+    display: flex; justify-content: space-between; align-items: center;
+    font-family: 'Oswald', sans-serif; font-size: 0.65rem;
+    letter-spacing: 0.2em; color: #888; margin-bottom: 0.6rem;
+    text-transform: uppercase;
+    transition: opacity 0.3s, max-height 0.3s;
+    max-height: 40px; overflow: hidden;
+  }
+  .masthead.compact .masthead-top { opacity: 0; max-height: 0; margin: 0; }
+  .paper-name {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2rem, 6vw, 4.5rem);
+    font-weight: 900; letter-spacing: -0.01em; line-height: 1;
+    color: var(--paper);
+    transition: font-size 0.3s;
+  }
+  .masthead.compact .paper-name { font-size: clamp(1.3rem, 3vw, 2rem); }
+  .paper-tagline {
+    font-family: 'Oswald', sans-serif; font-size: 0.7rem;
+    letter-spacing: 0.35em; color: var(--gold);
+    text-transform: uppercase; margin-top: 0.4rem;
+    transition: opacity 0.3s, max-height 0.3s;
+    max-height: 30px; overflow: hidden;
+  }
+  .masthead.compact .paper-tagline { opacity: 0; max-height: 0; margin: 0; }
+
+  /* ── MARQUEE LOOP (KEYFRAMES SHARED) ── */
+  @keyframes ticker {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+  }
+
+  /* ── HERO ── */
+  .hero {
+    min-height: 92vh;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    text-align: center; padding: 6rem 2rem 5rem;
+    border-bottom: 1px solid #ccc;
+    position: relative; overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute; inset: 0; pointer-events: none;
+    background-image: repeating-linear-gradient(
+      to bottom, transparent, transparent 29px, #d8d0be 29px, #d8d0be 30px
+    );
+    opacity: 0.3;
+  }
+  .hero-vol {
+    font-family: 'Oswald', sans-serif; font-size: 0.65rem;
+    letter-spacing: 0.3em; text-transform: uppercase;
+    color: var(--mid); margin-bottom: 1.4rem; position: relative;
+    opacity: 0; animation: fadeUp 0.6s 0.2s forwards;
+  }
+  .hero-gold-rule {
+    width: 60px; height: 2px; background: var(--gold);
+    margin: 0 auto 1.2rem; position: relative;
+    opacity: 0; animation: fadeUp 0.6s 0.35s forwards;
+  }
+  .hero-kicker {
+    font-family: 'Oswald', sans-serif; font-size: 0.7rem;
+    letter-spacing: 0.3em; text-transform: uppercase;
+    color: var(--gold); margin-bottom: 1.2rem; position: relative;
+    opacity: 0; animation: fadeUp 0.6s 0.45s forwards;
+  }
+  .hero-headline {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(3.2rem, 10vw, 9rem);
+    font-weight: 900; line-height: 0.93;
+    letter-spacing: -0.02em; color: var(--ink);
+    max-width: 1100px; position: relative;
+    opacity: 0; animation: fadeUp 0.9s 0.6s forwards;
+  }
+  .hero-headline em { font-style: italic; color: var(--gold); }
+  .hero-sub {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(1rem, 1.8vw, 1.2rem);
+    font-style: italic; font-weight: 400;
+    color: #555; max-width: 600px; line-height: 1.75;
+    margin: 2rem auto 0; position: relative;
+    opacity: 0; animation: fadeUp 0.7s 0.9s forwards;
+  }
+  .hero-scroll {
+    position: absolute; bottom: 2rem; left: 50%;
+    transform: translateX(-50%);
+    font-family: 'Oswald', sans-serif; font-size: 0.6rem;
+    letter-spacing: 0.3em; text-transform: uppercase;
+    color: var(--mid); display: flex; flex-direction: column;
+    align-items: center; gap: 0.5rem;
+    opacity: 0; animation: fadeIn 1s 1.6s forwards;
+  }
+  .scroll-needle {
+    width: 1px; height: 40px; background: var(--mid);
+    animation: needlePulse 1.8s ease-in-out infinite;
+  }
+  @keyframes needlePulse {
+    0%,100% { transform: scaleY(1); opacity: 0.35; }
+    50% { transform: scaleY(1.4); opacity: 1; }
+  }
+
+  /* ── SCROLL REVEALS ── */
+  .reveal {
+    opacity: 0; transform: translateY(44px);
+    transition: opacity 0.85s cubic-bezier(0.16,1,0.3,1),
+                transform 0.85s cubic-bezier(0.16,1,0.3,1);
+  }
+  .reveal.in { opacity: 1; transform: none; }
+  .reveal-d1 { transition-delay: 0.1s; }
+  .reveal-d2 { transition-delay: 0.22s; }
+
+  /* ── SECTION LABEL ── */
+  .section-label {
+    font-family: 'Oswald', sans-serif; font-size: 0.7rem;
+    letter-spacing: 0.35em; text-transform: uppercase;
+    color: var(--gold); margin-bottom: 0.8rem;
+    padding-bottom: 0.4rem; border-bottom: 1px solid var(--gold);
+    display: inline-block;
+  }
+
+  /* ── ABOUT BAND ── */
+  .about-band {
+    background: var(--ink); color: var(--paper);
+    padding: 5rem 3rem;
+  }
+  .about-inner {
+    max-width: 1100px; margin: 0 auto;
+    display: grid; grid-template-columns: 1fr 1px 1fr;
+    gap: 4rem; align-items: center;
+  }
+  .about-divider { background: #2e2e2e; }
+  .about-stat {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(4rem, 7vw, 6.5rem);
+    font-weight: 900; color: var(--gold); line-height: 1;
+    margin-bottom: 0.3rem;
+  }
+  .about-stat-label {
+    font-family: 'Oswald', sans-serif; font-size: 0.65rem;
+    letter-spacing: 0.25em; text-transform: uppercase; color: #888;
+    margin-bottom: 1.5rem;
+  }
+  .about-body { font-size: 1rem; line-height: 1.85; color: #bbb; }
+  .about-mission {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(1.4rem, 2.5vw, 2rem);
+    font-weight: 700; line-height: 1.35; color: var(--paper);
+  }
+  .about-mission em { font-style: italic; color: var(--gold); }
+
+  /* ── MARQUEE ── */
+  .marquee-band {
+    border-top: 1px solid #ccc; border-bottom: 1px solid #ccc;
+    overflow: hidden; padding: 1.1rem 0;
+  }
+  .marquee-inner {
+    display: inline-block; white-space: nowrap;
+    animation: ticker 22s linear infinite;
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(1.8rem, 3.5vw, 3rem);
+    font-weight: 900; font-style: italic;
+    color: transparent; -webkit-text-stroke: 1.5px #ccc;
+  }
+  .msep { -webkit-text-stroke: 1.5px var(--gold); margin: 0 1.2rem; }
+
+  /* ── CASES ── */
+  .cases-section { max-width: 1200px; margin: 0 auto; padding: 5rem 2rem; }
+  .cases-header { text-align: center; margin-bottom: 3.5rem; padding-bottom: 1.8rem; border-bottom: 3px double var(--ink); }
+  .cases-title {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2rem, 4vw, 3rem);
+    font-weight: 900; line-height: 1.1; color: var(--ink);
+    margin-top: 0.6rem;
+  }
+  .cases-title em { font-style: italic; }
+
+  .cases-grid { display: grid; grid-template-columns: 1fr 1fr; border: 1px solid #ccc; }
+
+  .case-card {
+    text-decoration: none; color: inherit;
+    display: block; padding: 2.8rem 2.5rem;
+    border-right: 1px solid #ccc;
+    position: relative; overflow: hidden;
+    transition: background 0.35s;
+  }
+  .case-card:last-child { border-right: none; }
+  .case-card:hover { background: #ede8df; }
+
+  .case-meta {
+    font-family: 'Oswald', sans-serif; font-size: 0.62rem;
+    letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--mid); margin-bottom: 1rem;
+  }
+  .case-badge {
+    display: inline-block; background: var(--gold); color: var(--ink);
+    font-family: 'Oswald', sans-serif; font-size: 0.6rem;
+    letter-spacing: 0.2em; text-transform: uppercase;
+    padding: 0.2rem 0.65rem; margin-bottom: 1rem; font-weight: 700;
+  }
+  .case-headline {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(1.4rem, 2.2vw, 1.95rem);
+    font-weight: 900; line-height: 1.15; color: var(--ink);
+    margin-bottom: 0.8rem;
+  }
+  .case-headline em { font-style: italic; }
+  .case-byline-row {
+    font-family: 'Oswald', sans-serif; font-size: 0.65rem;
+    letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--mid); margin-bottom: 1.5rem;
+    display: flex; gap: 1.5rem; flex-wrap: wrap;
+  }
+  .case-byline-row span { color: var(--ink); font-weight: 600; }
+
+  .case-score-box {
+    background: var(--ink); padding: 1rem 1.2rem;
+    display: flex; align-items: center; gap: 1rem;
+    margin-bottom: 1.8rem;
+  }
+  .case-score-num {
+    font-family: 'Playfair Display', serif;
+    font-size: 2.8rem; font-weight: 900;
+    color: var(--gold); line-height: 1;
+  }
+  .case-score-info {
+    font-family: 'Oswald', sans-serif; font-size: 0.6rem;
+    letter-spacing: 0.18em; text-transform: uppercase;
+    color: #888; line-height: 1.7;
+  }
+
+  .case-excerpt { font-size: 0.95rem; line-height: 1.82; color: #444; margin-bottom: 2rem; }
+
+  .case-cta {
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    font-family: 'Oswald', sans-serif; font-size: 0.68rem;
+    letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--ink); border-bottom: 1.5px solid var(--ink);
+    padding-bottom: 0.2rem;
+    transition: gap 0.3s, color 0.3s, border-color 0.3s;
+  }
+  .case-card:hover .case-cta { gap: 0.9rem; color: var(--gold); border-color: var(--gold); }
+
+  /* ── PULL QUOTE ── */
+  .quote-band { background: var(--ink); padding: 5rem 2rem; text-align: center; }
+  .quote-band blockquote {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(1.5rem, 3.2vw, 2.8rem);
+    font-weight: 700; font-style: italic;
+    color: var(--paper); line-height: 1.35;
+    max-width: 900px; margin: 0 auto 1.5rem;
+    border-top: 3px solid #333; border-bottom: 3px solid #333;
+    padding: 1.5rem 0;
+  }
+  .quote-band blockquote .gold { color: var(--gold); }
+  .quote-band cite {
+    font-family: 'Oswald', sans-serif; font-size: 0.65rem;
+    letter-spacing: 0.3em; text-transform: uppercase;
+    color: #888; font-style: normal;
+  }
+
+  /* ── FOOTER ── */
+  .paper-footer {
+    background: var(--ink); color: #666;
+    text-align: center; padding: 2rem 1rem 1.5rem;
+    font-family: 'Oswald', sans-serif; font-size: 0.6rem;
+    letter-spacing: 0.3em; text-transform: uppercase;
+    border-top: 4px solid var(--gold);
+  }
+  .footer-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.6rem; font-weight: 900;
+    color: var(--paper); letter-spacing: -0.01em;
+    margin-bottom: 0.3rem;
+  }
+  .footer-tagline { color: var(--gold); margin-bottom: 1.2rem; letter-spacing: 0.35em; }
+  .footer-rule { width: 50px; height: 1px; background: #333; margin: 1rem auto; }
+
+
+  /* ── SPECIAL SECTION SPOTLIGHT ── */
+  .section-spotlight { background: #f7e5e1; padding: 5rem 2rem 0; }
+  .spotlight-box {
+    max-width: 1136px; margin: 0 auto;
+    border-top: 3px double var(--ink); border-bottom: 3px double var(--ink);
+    text-align: center; padding: 3.5rem 2rem;
+  }
+  .spotlight-eyebrow {
+    font-family: 'Oswald', sans-serif; font-size: 0.68rem;
+    letter-spacing: 0.35em; text-transform: uppercase;
+    color: #c74a3e; margin-bottom: 1rem;
+  }
+  .spotlight-name {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2.4rem, 5vw, 4rem); font-weight: 900;
+    line-height: 1.05; color: var(--ink);
+  }
+  .spotlight-tag {
+    font-family: 'Oswald', sans-serif; font-size: 0.7rem;
+    letter-spacing: 0.35em; text-transform: uppercase;
+    color: #c74a3e; margin-top: 0.6rem;
+  }
+  .spotlight-rule { width: 60px; height: 2px; background: #c74a3e; margin: 1.5rem auto; }
+  .spotlight-body {
+    max-width: 720px; margin: 0 auto;
+    font-size: 1rem; line-height: 1.85; color: #555;
+  }
+  .spotlight-stats {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    max-width: 800px; margin: 2.4rem auto 0; border: 1px solid #ccc;
+  }
+  .spotlight-stat { padding: 1.2rem 0.8rem; border-right: 1px solid #ccc; }
+  .spotlight-stat:last-child { border-right: none; }
+  .spotlight-stat-num {
+    font-family: 'Playfair Display', serif; font-weight: 900;
+    font-size: clamp(1.6rem, 3vw, 2.2rem); color: #c74a3e; line-height: 1;
+  }
+  .spotlight-stat-label {
+    font-family: 'Oswald', sans-serif; font-size: 0.58rem;
+    letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--mid); margin-top: 0.5rem;
+  }
+  .spotlight-links {
+    display: flex; gap: 1rem; justify-content: center;
+    flex-wrap: wrap; margin-top: 2.4rem;
+  }
+  .spotlight-link {
+    display: inline-block; text-decoration: none;
+    font-family: 'Oswald', sans-serif; font-size: 0.68rem;
+    letter-spacing: 0.2em; text-transform: uppercase;
+    padding: 0.85rem 1.7rem; border: 1.5px solid #c74a3e; color: #c74a3e;
+    transition: background 0.3s, color 0.3s, border-color 0.3s;
+  }
+  .spotlight-link:hover { background: #c74a3e; color: var(--paper); }
+  .spotlight-link.solid { background: #c74a3e; color: var(--paper); }
+  .spotlight-link.solid:hover { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+
+  /* ── ANIMATIONS ── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(22px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fadeIn { to { opacity: 1; } }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 800px) {
+    .about-inner { grid-template-columns: 1fr; gap: 2.5rem; }
+    .about-divider { display: none; }
+    .about-band { padding: 3.5rem 1.5rem; }
+    .cases-grid { grid-template-columns: 1fr; }
+    .case-card { border-right: none; border-bottom: 1px solid #ccc; }
+    .case-card:last-child { border-bottom: none; }
+    .masthead-top { font-size: 0.55rem; }
+  }
+
+  @media (max-width: 800px) {
+    .section-spotlight { padding: 3.5rem 1.5rem 0; }
+    .spotlight-box { padding: 2.5rem 0.5rem; }
+    .spotlight-stats { grid-template-columns: 1fr 1fr; }
+    .spotlight-stat:nth-child(2n) { border-right: none; }
+    .spotlight-stat:nth-child(-n+2) { border-bottom: 1px solid #ccc; }
+    .spotlight-links { flex-direction: column; align-items: stretch; }
+    .spotlight-link { text-align: center; }
+  }
+</style>
+</head>
+<body>
+
+<div id="progress-bar"></div>
+
+<!-- MASTHEAD -->
+<header class="masthead" id="masthead">
+  <div class="masthead-top">
+    <span>Established 2026 · Vol. XLII</span>
+    <span>Bangalore, India</span>
+    <span>Monday, April 13, 2026</span>
+  </div>
+  <div class="paper-name">The Daily Forensic</div>
+  <div class="paper-tagline">Truth In Every Pixel · Science In Every Story</div>
+</header>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-vol">Vol. XLII · Special Edition · The Internet's Most Rigorous™ Face Analysis Publication</div>
+  <div class="hero-gold-rule"></div>
+  <div class="hero-kicker">Investigative · Cultural · Forensic</div>
+  <h1 class="hero-headline">Truth In<br><em>Every</em> Pixel.</h1>
+  <p class="hero-sub">
+    Where peer-reviewed data visualisations meet twelve minutes of meticulous research. Forensic journalism so thorough, so precise, so entirely unprompted.
+  </p>
+  <div class="hero-scroll">
+    <span>Scroll to investigate</span>
+    <div class="scroll-needle"></div>
+  </div>
+</section>
+
+<!-- ABOUT BAND -->
+<section class="about-band reveal">
+  <div class="about-inner">
+    <div>
+      <div class="about-stat">VII</div>
+      <div class="about-stat-label">Reports Filed · Vol. XLII</div>
+      <p class="about-body">
+        We are a forensic cultural analysis unit operating out of Bangalore, staffed by researchers with access to Google Images and very strong opinions. Our team works around the clock, for up to twelve consecutive minutes, to bring you findings the scientific community did not ask for, but absolutely cannot ignore.
+      </p>
+    </div>
+    <div class="about-divider"></div>
+    <div>
+      <div class="section-label" style="color:#555; border-color:#333;">Our Mandate</div>
+      <div class="about-mission">
+        We document the <em>undeniable.</em><br>
+        We chart the <em>unmistakable.</em><br>
+        We publish the <em>entirely unprompted.</em>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- MARQUEE -->
+<div class="marquee-band">
+  <div class="marquee-inner">
+    FORENSIC <span class="msep">&bull;</span> ANALYSIS <span class="msep">&bull;</span> TRUTH <span class="msep">&bull;</span> EVERY PIXEL <span class="msep">&bull;</span> FORENSIC <span class="msep">&bull;</span> ANALYSIS <span class="msep">&bull;</span> TRUTH <span class="msep">&bull;</span> EVERY PIXEL <span class="msep">&bull;</span> FORENSIC <span class="msep">&bull;</span> ANALYSIS <span class="msep">&bull;</span> TRUTH <span class="msep">&bull;</span> EVERY PIXEL <span class="msep">&bull;</span>
+  </div>
+</div>
+
+<!-- SPECIAL SECTION SPOTLIGHT -->
+<section class="section-spotlight reveal">
+  <div class="spotlight-box">
+    <div class="spotlight-eyebrow">A Special Section of The Daily Forensic</div>
+    <div class="spotlight-name">The Attendance Files</div>
+    <div class="spotlight-tag">All The Absences That&rsquo;s Fit To Print</div>
+    <div class="spotlight-rule"></div>
+    <p class="spotlight-body">
+      The register, read line by line. The Attendance Files is this paper's standing attendance-forensics desk: one register, ninety-two school days, every absence counted, every Wednesday accounted for. Now featuring the Parth Sarthi Attendance Dossier: forty of ninety-two days present, and one unexplained sixteen-day block in the middle of the year.
+    </p>
+    <div class="spotlight-stats">
+      <div class="spotlight-stat">
+        <div class="spotlight-stat-num">92</div>
+        <div class="spotlight-stat-label">School Days</div>
+      </div>
+      <div class="spotlight-stat">
+        <div class="spotlight-stat-num">52</div>
+        <div class="spotlight-stat-label">Absences Recorded</div>
+      </div>
+      <div class="spotlight-stat">
+        <div class="spotlight-stat-num">43.5%</div>
+        <div class="spotlight-stat-label">Attendance Rate</div>
+      </div>
+      <div class="spotlight-stat">
+        <div class="spotlight-stat-num">16</div>
+        <div class="spotlight-stat-label">Consecutive Days Missing</div>
+      </div>
+    </div>
+    <div class="spotlight-links">
+      <a class="spotlight-link solid" href="https://thedailyforensic.github.io/the-attendence-report/Home/">Visit The Attendance Files →</a>
+      <a class="spotlight-link" href="https://thedailyforensic.github.io/the-attendence-report/parth-sarthi-dossier/">Read The Parth Sarthi Dossier →</a>
+    </div>
+  </div>
+</section>
+
+<!-- CASES -->
+<section class="cases-section">
+  <div class="cases-header reveal">
+    <div class="section-label">Filed Reports · Vol. XLII</div>
+    <h2 class="cases-title">Dossiers &amp; <em>Investigations</em></h2>
+  </div>
+
+  <div class="cases-grid">
+
+    <a class="case-card reveal reveal-d1" href="https://thedailyforensic.github.io/bala-obama-face-analysis.com/" target="_blank" rel="noopener">
+      <div class="case-meta">Vol. XLII · No. 98 · April 8, 2026</div>
+      <div class="case-badge">Investigative Facial Analysis</div>
+      <h3 class="case-headline">Separated By an Ocean, a Decade, and the Presidency,<br><em>But Not By Cheekbones</em></h3>
+      <div class="case-byline-row">
+        By <span>Dr. Rohan Pixel</span> · Forensic Correspondent · The Daily Forensic
+      </div>
+      <div class="case-score-box">
+        <div class="case-score-num">87%</div>
+        <div class="case-score-info">
+          Facial Similarity Score<br>
+          43 Distinct Anatomical Landmarks<br>
+          Peer-Reviewed Data Visualisations
+        </div>
+      </div>
+      <p class="case-excerpt">
+        A landmark forensic investigation into the uncanny resemblance between Barack Obama, 44th President of the United States, and Bala Murali Krishna M: 15-year-old village boy, Hindu, Jew, grocery store priest, Roblox veteran. The implications are profound, far-reaching, and entirely unexplained by conventional genetics, geography, or common sense.
+      </p>
+      <div class="case-cta">Read Full Investigation →</div>
+    </a>
+
+    <a class="case-card reveal reveal-d2" href="https://thedailyforensic.github.io/Shetty-gandhi-face-analysis/" target="_blank" rel="noopener">
+      <div class="case-meta">Vol. XLII · No. 102 · April 12, 2026</div>
+      <div class="case-badge">Cultural Analysis Edition</div>
+      <h3 class="case-headline">When Nature Mirrors the Father of a Nation: <em>The Uncanny Case of Ritvik and the Mahatma</em></h3>
+      <div class="case-byline-row">
+        By <span>Dr. Nithilan Omaiwah</span> · Senior Cultural Correspondent · The Daily Forensic
+      </div>
+      <div class="case-score-box">
+        <div class="case-score-num">∞</div>
+        <div class="case-score-info">
+          Gandhian Alignment Score<br>
+          Physical · Philosophical · Spiritual<br>
+          Nickname-Based Cosmic Evidence
+        </div>
+      </div>
+      <p class="case-excerpt">
+        A forensic-cultural investigation into the astonishing resemblance between Mahatma Gandhi (Father of the Indian Nation, Apostle of Peace) and Ritvik, known universally as "Nature." The resemblance runs across the physical, the philosophical, the habitual, and the comedic. It demands documentation.
+      </p>
+      <div class="case-cta">Read Full Investigation →</div>
+    </a>
+
+    <a class="case-card reveal reveal-d1" href="https://thedailyforensic.github.io/aahil-doisser/" target="_blank" rel="noopener">
+      <div class="case-meta">Vol. XLII · No. 104 · April 13, 2026</div>
+      <div class="case-badge">Intelligence Dossier</div>
+      <h3 class="case-headline">The Dossier on Mohammad Aahil Ayan Ahmad: <em>F1 Fanatic, Underage Road Menace, and Collector of Very Small Cars</em></h3>
+      <div class="case-byline-row">
+        By <span>Sr. Investigator M. Clarkson</span> · Field Correspondent · The Daily Forensic
+      </div>
+      <div class="case-score-box">
+        <div class="case-score-num">7.4</div>
+        <div class="case-score-info">
+          Chaos Index / 10<br>
+          Elevated Bajaj Avenger Activity<br>
+          Unchecked F1 Discourse
+        </div>
+      </div>
+      <p class="case-excerpt">
+        A fully sourced, peer-reviewed forensic investigation into the hobbies, habits, personality profile, and questionable road presence of Mohammad Aahil Ayan Ahmad: Muslim, French sympathiser, sworn devotee of Lewis Hamilton, underage Bajaj Avenger operator of deeply concerning legal standing, and best friend to one Taraksha Panda.
+      </p>
+      <div class="case-cta">Read Full Dossier →</div>
+    </a>
+
+    <a class="case-card reveal reveal-d2" href="https://thedailyforensic.github.io/Nayana-Baiju-dossier/" target="_blank" rel="noopener">
+      <div class="case-meta">Vol. XLII · No. 107 · May 6, 2026</div>
+      <div class="case-badge">Slytherin Division</div>
+      <h3 class="case-headline">The Nayana Baiju Dossier: <em>House Allegiance, the Draco Malfoy Edit Industrial Complex, and the Dora Situation</em></h3>
+      <div class="case-byline-row">
+        By <span>The Daily Forensic Field Bureau</span> · Chrysalis Division · Horamavu
+      </div>
+      <div class="case-score-box">
+        <div class="case-score-num">99</div>
+        <div class="case-score-info">
+          Slytherin Loyalty Score / 100<br>
+          Draco Edit Output: ∞<br>
+          Muscle Authenticity: Disputed
+        </div>
+      </div>
+      <p class="case-excerpt">
+        A comprehensive forensic investigation into one of 11th grade's most formidable presences: a confirmed Slytherin, a distributor of Draco Malfoy edits at volumes that have taxed the storage capacity of at least one affiliated device, and the operating centre of an affiliate network that numbers exactly two.
+      </p>
+      <div class="case-cta">Read Full Dossier →</div>
+    </a>
+
+    <a class="case-card reveal reveal-d1" href="https://thedailyforensic.github.io/the-manas-situation/" target="_blank" rel="noopener">
+      <div class="case-meta">Vol. VII · No. 41 · September 6, 2026</div>
+      <div class="case-badge">Special Gym Bro Edition</div>
+      <h3 class="case-headline">The Manas Situation: <em>A Full Accounting of the Gooner Forearms, the Flights, and the Three Women</em></h3>
+      <div class="case-byline-row">
+        By <span>The Group Chat Editorial Desk</span> · Investigations · The Daily Forensic
+      </div>
+      <div class="case-score-box">
+        <div class="case-score-num">7</div>
+        <div class="case-score-info">
+          California Trips · Trailing 12 Months<br>
+          Concurrent Girlfriends: 3<br>
+          Self-Reported Forearm: 19 in
+        </div>
+      </div>
+      <p class="case-excerpt">
+        A comprehensive, unauthorised, and frankly overdue investigation into Manas: UP born, Bangalore based, gym obsessed, California frequenting, and the logistical marvel of his romantic calendar. Compiled by people who love him and are also slightly concerned.
+      </p>
+      <div class="case-cta">Read Full Investigation →</div>
+    </a>
+
+    <a class="case-card reveal reveal-d2" href="https://thedailyforensic.github.io/the-attendence-report/parth-sarthi-dossier/">
+      <div class="case-meta">Vol. XLII · No. 117 · October 2, 2026</div>
+      <div class="case-badge">Enhanced Absence Edition</div>
+      <h3 class="case-headline">Fifty-Two Absences, Ninety-Two School Days, and One Unbroken Sixteen-Day Vanishing:<br><em>The Parth Sarthi Attendance Dossier</em></h3>
+      <div class="case-byline-row">
+        By <span>Dr. Rohan Pixel</span> · Forensic Correspondent · The Daily Forensic
+      </div>
+      <div class="case-score-box">
+        <div class="case-score-num">43.5%</div>
+        <div class="case-score-info">
+          Overall Attendance Rate · 40 of 92<br>
+          Rank In School: 1417 of 1420<br>
+          One Unbroken 16-Day Block
+        </div>
+      </div>
+      <p class="case-excerpt">
+        Grade 11 Science INT A, Roll 19, was recorded present on 40 of 92 school days. The Wednesdays, the blocks, the class median of 16 and the sixteen consecutive misses in the middle of the year are examined here, at length, and without rounding.
+      </p>
+      <div class="case-cta">Read Full Dossier →</div>
+    </a>
+
+  </div>
+</section>
+
+<!-- PULL QUOTE -->
+<section class="quote-band reveal">
+  <blockquote>
+    "We thought it would be a five-minute gag.<br>
+    Then we started measuring.<br>
+    And the numbers kept coming back <span class="gold">consistent.</span>"
+  </blockquote>
+  <cite>Senior Analyst · Identity Withheld · For Reasons of Professional Dignity</cite>
+</section>
+
+<!-- FOOTER -->
+<footer class="paper-footer">
+  <div class="footer-name">The Daily Forensic</div>
+  <div class="footer-tagline">Truth In Every Pixel · Science In Every Story</div>
+  <div class="footer-rule"></div>
+  © 2026 The Daily Forensic · All investigations conducted with maximum rigour · Bangalore, India · Vol. XLII
+  <br>
+  <a href="https://thedailyforensic.github.io/privacy-policy/" target="_blank" rel="noopener" style="color: var(--gold); text-decoration: none; margin-top: 0.8rem; display: inline-block; font-size: 0.55rem; letter-spacing: 0.25em; border-bottom: 1px solid var(--gold); padding-bottom: 1px;">Privacy Policy</a>
+</footer>
+
+<script>
+  // Progress bar
+  const bar = document.getElementById('progress-bar');
+  window.addEventListener('scroll', () => {
+    const h = document.body.scrollHeight - window.innerHeight;
+    bar.style.width = (window.scrollY / h * 100) + '%';
+  });
+
+  // Compact masthead on scroll
+  const mh = document.getElementById('masthead');
+  window.addEventListener('scroll', () => {
+    mh.classList.toggle('compact', window.scrollY > 80);
+  });
+
+  // Scroll reveals
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) { e.target.classList.add('in'); obs.unobserve(e.target); }
+    });
+  }, { threshold: 0.1 });
+  document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+
+  // reveal fallback (viewport + timer) so content can never stay hidden
+  function revealInView() {
+    document.querySelectorAll('.reveal:not(.in)').forEach(el => {
+      if (el.getBoundingClientRect().top < window.innerHeight * 0.95) el.classList.add('in');
+    });
+  }
+  window.addEventListener('scroll', revealInView, { passive: true });
+  window.addEventListener('load', revealInView);
+  setTimeout(revealInView, 1500);
+</script>
+</body>
+</html>
